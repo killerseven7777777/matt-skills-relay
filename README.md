@@ -2,12 +2,12 @@
 
 给 [Matt Pocock 的工程技能集](https://github.com/mattpocock/skills) 补上两块：
 
-- **`/dev-prep`**：开发准备路由器。开工前先侦察项目状态，告诉你现在该走哪个技能。
+- **`/develop`**：开发流程路由器。开工前、每做完一步、流程卡住时都可以调用，它侦察项目状态，告诉你下一步该走哪个技能。
 - **`/relay-tickets` + `/relay-takeover`**：接力开发。强模型规划、弱模型写代码，弱模型走到「必须由强模型亲手写」的区域时自动停下，由你请强模型接手，写完再交还。
 
 技能正文是简体中文，术语、技能名和文件名保留英文，所以和英文原版技能集也能直接配合。
 
-> English summary: add-ons for Matt Pocock's skills. `dev-prep` is a router that inspects your repo and tells you which skill to run next. `relay-tickets` / `relay-takeover` support a planner-executor workflow: a strong model plans and marks *strong zones* (regions it must implement itself) in each ticket; a cheaper model implements the rest, stops at the strong-zone boundary, and hands back. Skill bodies are in Simplified Chinese.
+> English summary: add-ons for Matt Pocock's skills. `develop` is a router you call throughout development: it inspects your repo and tells you which skill to run next. `relay-tickets` / `relay-takeover` support a planner-executor workflow: a strong model plans and marks *strong zones* (regions it must implement itself) in each ticket; a cheaper model implements the rest, stops at the strong-zone boundary, and hands back. Skill bodies are in Simplified Chinese.
 
 ## 为什么需要接力开发
 
@@ -79,9 +79,9 @@ strong zone 不是「留着以后再定的问题」。所有决策在写文档�
 
 规则写进 ticket 文件本身，而不只写在技能里，是因为执行模型可能根本不在 Claude Code 里跑，看不到 Claude 的技能，但它一定会读自己正在执行的那条 ticket。
 
-## 关于 `/dev-prep`
+## 关于 `/develop`
 
-Matt Pocock 的技能集很好用，但二十多个技能，新手往往不知道现在该用哪个。`/dev-prep` 在你开工前：
+Matt Pocock 的技能集很好用，但二十多个技能，新手往往不知道现在该用哪个。`/develop` 贯穿整个开发过程：开工前、每做完一步、流程卡住时都可以调用它。它只负责路由，不自己写代码。每次调用它会：
 
 1. 侦察项目状态：git、issue tracker 配置、`CONTEXT.md`、ADR、已有的 spec 和 ticket、是否启用了 relay
 2. 对照决策表判断你处在哪一步，给出一个明确推荐，并点破相邻技能的区别（比如想法还模糊时就上 `/to-spec` 是错的，应该先 `/grill-with-docs`）
@@ -89,7 +89,7 @@ Matt Pocock 的技能集很好用，但二十多个技能，新手往往不知�
 
 检测到项目启用了 relay，或有 ticket 处于 `needs-strong` 状态时，它会把你路由到 `/relay-tickets` 或 `/relay-takeover`。
 
-说「开工」「准备开发」「该用哪个技能」就会触发，也可以直接输入 `/dev-prep`。
+说「开工」「下一步做什么」「该用哪个技能」就会触发，也可以直接输入 `/develop`。
 
 ## 使用
 
