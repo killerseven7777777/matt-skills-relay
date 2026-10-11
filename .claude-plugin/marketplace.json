@@ -1,0 +1,17 @@
+{
+    "name": "matt-skills-relay",
+    "owner": {
+        "name": "killerseven7777777",
+        "url": "https://github.com/killerseven7777777"
+    },
+    "description": "Matt Pocock 技能集的扩展：开发准备路由器与接力开发技能。",
+    "plugins": [
+        {
+            "name": "matt-skills-relay",
+            "source": "./",
+            "description": "dev-prep 路由器 + relay-tickets / relay-takeover 接力开发（强模型规划、弱模型执行，弱模型到 strong zone 自动停下）。",
+            "category": "engineering",
+            "keywords": ["engineering", "skills", "tickets", "planner-executor"]
+        }
+    ]
+}
