@@ -91,20 +91,25 @@ Matt Pocock 的技能集很好用，但二十多个技能，新手往往不知�
 
 说「开工」「准备开发」「该用哪个技能」就会触发，也可以直接输入 `/dev-prep`。
 
-## 安装
+## 使用
 
-**前置**：先装好 Matt Pocock 的技能集，并在项目里跑过一次 `/setup-matt-pocock-skills`。`/relay-tickets` 要读取 `/to-tickets` 的技能文件来拆单，`/dev-prep` 的路由目标也都是这套技能。
+前置：装好 Matt Pocock 的技能集，并在项目里跑过一次 `/setup-matt-pocock-skills`。
 
-**Claude Code**：
+把 `skills/` 下的三个目录放到你的 agent 读取技能的位置就行，交给 agent 自己放也可以。
+
+<details>
+<summary>想让第 4 层 hook 也生效（仅 Claude Code）</summary>
+
+hook 随插件分发，需要按插件安装：
 
 ```
 /plugin marketplace add killerseven7777777/matt-skills-relay
 /plugin install matt-skills-relay@matt-skills-relay
 ```
 
-hook 需要 `python3` 或 `python` 在 PATH 上（只用标准库）。
+hook 需要 PATH 上有 `python3` 或 `python`，只用标准库。不装 hook，前三层保证照样有效。
 
-**其他 agent**：把 `skills/` 下的三个目录复制到你的 agent 读取技能的位置即可。hook 是 Claude Code 专属的，不会生效，前三层保证照样有效。
+</details>
 
 ## 局限
 
