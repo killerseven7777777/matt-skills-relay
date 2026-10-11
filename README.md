@@ -1,5 +1,7 @@
 # matt-skills-relay
 
+中文 | [English](./README.en.md)
+
 给 [Matt Pocock 的工程技能集](https://github.com/mattpocock/skills) 补上两块：
 
 - **`/develop`**：开发流程路由器。开工前、每做完一步、流程卡住时都可以调用，它侦察项目状态，告诉你下一步该走哪个技能。
@@ -7,7 +9,7 @@
 
 技能正文是简体中文，术语、技能名和文件名保留英文，所以和英文原版技能集也能直接配合。
 
-> English summary: add-ons for Matt Pocock's skills. `develop` is a router you call throughout development: it inspects your repo and tells you which skill to run next. `relay-tickets` / `relay-takeover` support a planner-executor workflow: a strong model plans and marks *strong zones* (regions it must implement itself) in each ticket; a cheaper model implements the rest, stops at the strong-zone boundary, and hands back. Skill bodies are in Simplified Chinese.
+> English summary: add-ons for Matt Pocock's skills. `develop` is a router you call throughout development: it inspects your repo and tells you which skill to run next. `relay-tickets` / `relay-takeover` support a planner-executor workflow: a strong model plans and marks *strong zones* (regions it must implement itself) in each ticket; a cheaper model implements the rest, stops at the strong-zone boundary, and hands back. Skill bodies are in Simplified Chinese. Full English README: [README.en.md](./README.en.md).
 
 ## 为什么需要接力开发
 
