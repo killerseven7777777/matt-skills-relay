@@ -37,7 +37,7 @@ description: 开发流程路由器，贯穿整个开发过程。当用户要开�
 - 已有规格，需要拆成可执行的工单 → `/to-tickets`
     - 但如果执行者比规划者弱（强模型规划、弱模型动手的接力开发），或项目已启用 relay（存在 `docs/agents/relay.md`）→ 改用 `/relay-tickets`。执行者是谁看不出来时，这是一个真实分岔，问用户。
 - 已有工单/规格，直接动手实现 → `/implement`
-- 有 ticket 处于 `Status: needs-strong`（弱模型停在了 strong zone）→ `/relay-takeover`
+- 有 ticket 处于 `Status: needs-strong`（弱模型停在了 strong 步骤或 strong zone 的触发条件前）→ `/relay-takeover`
 - 有一个具体的设计问题拿不准（状态模型对不对、UI 长什么样） → `/prototype`
 - 有个 bug，一眼看不出原因，或间歇性/回归性问题 → `/diagnosing-bugs`
 - 有一堆未整理的 issue / 外部 PR 堆积 → `/triage`

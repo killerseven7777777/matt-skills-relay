@@ -19,7 +19,7 @@ A lot of people already work this way:
 
 The problem: **a written plan is only part of the plan.** The strong model carries many judgements it never wrote down. When the executor hits a hard spot it fills the gap itself, and the usual results are quiet simplifications, literal readings that miss the intent, and improvising when the code doesn't match the plan.
 
-One answer is to make the plan ever more detailed. But development is linear, and you can't solve every hard spot up front. Relay takes a different route: **while splitting tickets, the strong model decides which regions it must write itself and marks them as strong zones. The executor stops at the boundary and doesn't touch them.**
+One answer is to make the plan ever more detailed. But development is linear, and you can't solve every hard spot up front. Relay takes a different route: **while splitting tickets, the strong model writes each one as ordered steps and marks the steps it must write itself as strong steps. The executor works through the steps in order and stops at the first strong step; the strong model does just those steps and hands back, and the executor continues from the next one.**
 
 A strong zone is not "a question to settle later". Every decision was made by the strong model during planning. A strong zone is a part that is **decided, but that a weaker model won't get right**, for example:
 
@@ -32,7 +32,7 @@ A strong zone is not "a question to settle later". Every decision was made by th
 
 Say you're building a cached report export, with Opus planning and Sol executing.
 
-1. **Opus: `/relay-tickets`.** It splits the work into tracer-bullet tickets the way `/to-tickets` does, and also assigns an executor and marks strong zones for each one. You review and approve the split and the strong zones together. One ticket might look like this:
+1. **Opus: `/relay-tickets`.** It splits the work into tracer-bullet tickets the way `/to-tickets` does, and also assigns an executor, writes each ticket as ordered steps and marks the strong steps. You review and approve the split, the steps and the strong zones together. One ticket might look like this:
 
     ```markdown
     # 03: Paginated report export
@@ -46,24 +46,35 @@ Say you're building a cached report export, with Opus planning and Sol executing
 
     **Executor:** weak
 
+    ## 执行步骤 (steps)
+
+    - [ ] 1. [weak] The export endpoint accepts a cursor parameter and passes it through as is.
+    - [ ] 2. [strong · SZ1] Implement `encode_cursor()` / `decode_cursor()`.
+    - [ ] 3. [weak] Switch the endpoint to paginate with the cursor from step 2.
+    - [ ] 4. [weak] The frontend fetches pages and concatenates the results.
+
     ## Strong zones
 
-    - [ ] SZ1: `encode_cursor()` / `decode_cursor()` in `src/export/cursor.py`. Reason: must line up with the cache invalidation strategy from 02, see ADR-0004.
+    - SZ1: step 2. Reason: must line up with the cache invalidation strategy from 02, see ADR-0004.
+    - SZ2: triggered. Stop before changing any file under `src/cache/`. Forbidden workaround: writing a second copy of the cache logic under `src/export/`.
 
     ## 执行规则 (execution rules)
 
-    1. Read the whole ticket before starting, including Strong zones.
-    2. After each acceptance item, re-read Strong zones before starting the next.
-    3. If the next step would enter an unchecked strong zone, stop immediately...
+    1. Read the whole ticket before starting...
+    2. Follow the steps strictly in order, one at a time...
+    3. If the next step is `[strong]`, stop and hand off. Don't do later `[weak]` steps first.
+    4. If you hit a trigger, stop. Don't work around it...
     ```
 
-2. **Sol works through the ticket.** It adds the endpoint parameter, reaches the cursor encoding, and hits SZ1. It commits what it has, sets `Status:` to `needs-strong`, leaves a handoff note under `## Comments`, and tells you "reached SZ1, please bring in the strong model".
-3. **Opus: `/relay-takeover 03`.** It reads only the handoff note and the git diff, not the whole project. It checks whether Sol overstepped, implements SZ1, runs the tests, sets the status back to `ready-for-agent`, and hands back.
-4. **Sol continues from where the note says**, and finishes the frontend part.
+2. **Sol works through the ticket.** It finishes step 1; the next step is `[strong]`, so it stops. It does not jump ahead to the frontend in step 4. It commits what it has, sets `Status:` to `needs-strong`, leaves a handoff note under `## Comments`, and tells you "stopped at step 2 (SZ1), please bring in the strong model".
+3. **Opus: `/relay-takeover 03`.** It reads only the handoff note and the git diff, not the whole project. It checks whether Sol overstepped, skipped ahead or worked around a strong zone, does step 2 only, runs the tests, sets the status back to `ready-for-agent`, and hands back with "continue from step 3".
+4. **Sol continues from step 3** and finishes the remaining steps.
 
-Sometimes the executor forgets to stop and writes a strong zone anyway. That's fine: `/relay-takeover` reviews it as a draft, keeps it if it's right, and rewrites it if not.
+Why ordered steps: with only "stop before touching this file", an executor does everything it can first, and when it hits a hard spot it often writes an equivalent somewhere else, so it never stops at all. We saw exactly this in a real project: the executor replaced a readback function the strong zone reserved with a direct API call in its own scenario file, and put device helpers in a file it was allowed to edit; the whole ticket got done and no strong zone ever fired. That's why every triggered strong zone must also name the forbidden workaround.
 
-Besides strong zones, the execution rules include objective fallback triggers: the same test still fails after two fixes, a file outside the ticket's scope needs changing, the code doesn't match the interface the ticket describes, a new dependency is needed, or an acceptance criterion can be read more than one way. Any of these also makes the executor stop. They are deliberately mechanical, because a weak model's biggest flaw is not knowing what it doesn't know.
+Sometimes the executor still forgets to stop, skips ahead or works around a strong zone. That's fine: `/relay-takeover` reviews all of it as a draft, keeps what's right, and redoes the rest as originally specified.
+
+Besides strong zones, the execution rules include objective fallback triggers: the same test still fails after two fixes, a file outside the ticket's scope needs changing, the code doesn't match the interface the ticket describes, a new dependency is needed, a step or acceptance criterion can be read more than one way, or the context window is nearly full. Any of these also makes the executor stop. They are deliberately mechanical, because a weak model's biggest flaw is not knowing what it doesn't know.
 
 ## How the executor is made to stop
 
@@ -74,8 +85,8 @@ Instead of relying on someone remembering to call a skill, the rules sit where t
     - `docs/agents/relay.md`: the single source of the rules and ticket template, readable by an executor in any tool
     - a section at the end of `docs/agents/issue-tracker.md`: every skill reads this file before publishing tickets, so even a plain `/to-tickets` run gets stopped at publish time and adds the markings
     - a `### Relay execution` section in `AGENTS.md` or `CLAUDE.md`
-3. **Executor-side fallback:** if a ticket has no `## Strong zones` section, the executor doesn't start. It asks you to have the strong model mark the ticket first.
-4. **Hook:** the plugin ships a `PostToolUse` hook. Every time Claude Code writes `.scratch/*/issues/*.md`, it checks that `**Executor:**`, `## Strong zones` and `## 执行规则` are all present, and tells the model to add whatever is missing.
+3. **Executor-side fallback:** if a ticket lacks the `## 执行步骤` (steps) or `## Strong zones` section, the executor doesn't start. It asks you to have the strong model mark the ticket first.
+4. **Hook:** the plugin ships a `PostToolUse` hook. Every time Claude Code writes `.scratch/*/issues/*.md`, it checks that `**Executor:**`, `## 执行步骤`, `## Strong zones` and `## 执行规则` are all present, and tells the model to add whatever is missing (tickets marked `Status: done` are skipped).
 
 The rules live in the ticket files themselves, not only in the skills, because the executor may not run in Claude Code at all. It can't see Claude's skills, but it always reads the ticket it is working on.
 
@@ -111,7 +122,7 @@ The hook needs `python3` or `python` on PATH and uses only the standard library.
 
 ## Limitations
 
-- This is v0.1 and hasn't been validated across many projects. How well strong zones are chosen depends on the planning model's judgement.
+- This is v0.2 and hasn't been validated across many projects. How well strong zones are chosen depends on the planning model's judgement.
 - The hook only checks the local markdown tracker (`.scratch/`). With GitHub or GitLab issues, the first three layers carry the guarantee.
 - Relay isn't always cheaper. Small tasks are cheaper done by one model; whether splitting pays off depends on the price gap between the two models and how often the executor gets it right first time. `/relay-tickets` asks who the executor is up front, and tells you to skip it when the executor is as strong as the planner.
 

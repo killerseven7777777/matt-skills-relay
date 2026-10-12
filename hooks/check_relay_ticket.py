@@ -2,8 +2,9 @@
 
 After Claude writes or edits a local ticket file (.scratch/<feature>/issues/*.md)
 in a repo that has relay enabled (docs/agents/relay.md exists), check that the
-ticket carries the three relay sections. If any is missing, feed a reminder back
-to Claude. Never fails the tool call: any error exits 0 silently.
+ticket carries the four relay sections. If any is missing, feed a reminder back
+to Claude. Tickets already marked `Status: done` are skipped: they are history.
+Never fails the tool call: any error exits 0 silently.
 
 Source is UTF-8 (Python 3 default). The JSON output uses ensure_ascii, so the
 Windows console code page cannot garble the Chinese text on the way out.
@@ -17,12 +18,16 @@ TICKET_PATH = re.compile(r"^(?P<root>.*)/\.scratch/[^/]+/issues/[^/]+\.md$")
 
 REQUIRED = [
     "**Executor:**",
+    "## 执行步骤",
     "## Strong zones",
     "## 执行规则",
 ]
 
 # Wayfinder child tickets share the issues/ folder but are not implementation tickets.
 NON_IMPL_TYPE = re.compile(r"^Type:\s*(research|prototype|grilling)\b", re.MULTILINE | re.IGNORECASE)
+
+# `Status: done` or `**Status:** done`, the two forms docs/agents/issue-tracker.md allows.
+DONE = re.compile(r"^\**Status:\**\s*done\s*$", re.MULTILINE | re.IGNORECASE)
 
 
 def main():
@@ -39,7 +44,7 @@ def main():
         return
     with open(path, encoding="utf-8", errors="replace") as f:
         text = f.read()
-    if NON_IMPL_TYPE.search(text):
+    if NON_IMPL_TYPE.search(text) or DONE.search(text):
         return
     missing = [s for s in REQUIRED if s not in text]
     if not missing:

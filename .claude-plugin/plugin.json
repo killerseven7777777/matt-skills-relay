@@ -1,7 +1,7 @@
 {
     "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
     "name": "matt-skills-relay",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Matt Pocock 技能集的扩展：develop 开发流程路由器，以及 relay-tickets / relay-takeover 接力开发（强模型规划、弱模型执行）。正文简体中文，术语保留英文。",
     "author": {
         "name": "killerseven7777777",
